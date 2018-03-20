@@ -3,7 +3,7 @@
 //      color.addAlpha(color.blue, .7);
 let color = {
     addAlpha: function(clr, alpha){
-        if (clr.indexOf('a') == -1){
+        if (clr.indexOf('a') === -1){
             return 'rgba' + clr.substr(3, clr.length - 4) + ', ' + alpha + ')'
         }
     },
