@@ -15,6 +15,7 @@ let color = {
     indigo: 'rgb(0, 128, 255)',
     violet: 'rgb(128, 0, 255)',
     white: 'rgb(255, 255, 255)',
-    black: 'rgb(0, 0, 0)'
+    black: 'rgb(0, 0, 0)',
+    random: 'rgb(1,5,3)',
 
 }
