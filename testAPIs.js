@@ -1,4 +1,4 @@
-MyGame.main = (function (graphics, input, particles, persistence) {
+MyGame.main = (function (graphics, input, particleSystem, persistence) {
     let previousTime = performance.now();
 
     let keyboard = input.Keyboard();
@@ -39,6 +39,26 @@ MyGame.main = (function (graphics, input, particles, persistence) {
 
     let letters = graphics.Letters(text);
 
+    let particleSpec = {
+        x: 800,
+        y: 500,
+        // xMax: 850,
+        // yMax: 550,
+        particlesPerSec: 100,
+        fill: color.white,
+        lineWidth: 1,
+        stroke: color.black,
+        // imageSrc: 'bubble1b.png',
+        rotationMax: 1,
+        lifetime: {mean: 2000, std: 100},
+        speed: {mean: 50, std: 10},
+        size: {mean: 5, std: 1},
+        gravity: 9.8,
+        duration: 10000,
+    }
+
+    particleSystem.ParticleEffect(particleSpec);
+
     //-----------------------------------------------------
     //
     //                  Actual Game Loop
@@ -46,29 +66,29 @@ MyGame.main = (function (graphics, input, particles, persistence) {
     //-----------------------------------------------------
 
     function update(elapsedTime) {
+        particleSystem.update(elapsedTime);
+    }
 
-}
+    function processInput(elapsedTime) {
+        keyboard.processInput(elapsedTime);
+    }
 
-function processInput(elapsedTime) {
-    keyboard.processInput(elapsedTime);
-}
+    function render() {
+        graphics.clear();
+        particleSystem.draw();
+    }
 
-function render() {
-    graphics.clear();
-    menuGraphic.draw();
-}
+    function gameLoop(time) {
+        let elapsedTime = time - previousTime;
+        previousTime = time;
 
-function gameLoop(time) {
-    let elapsedTime = time - previousTime;
-    previousTime = time;
+        processInput(elapsedTime);
+        update(elapsedTime);
+        render();
+        requestAnimationFrame(gameLoop);
+    }
 
-    processInput(elapsedTime);
-    update(elapsedTime);
-    render();
+    console.log('game initializing...');
     requestAnimationFrame(gameLoop);
-}
 
-console.log('game initializing...');
-requestAnimationFrame(gameLoop);
-
-}) (MyGame.graphics, MyGame.input, MyGame.particles, MyGame.persistence);
+})(MyGame.graphics, MyGame.input, MyGame.particleSystem, MyGame.persistence);

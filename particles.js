@@ -11,7 +11,7 @@ EXAMPLE spec object:
     imageSrc: 'fire.png',
     rotation: {mean: .1, std: .1},
     lifetime: {mean: 700, std: 100},
-    speed: {mean: .05, std: .01},
+    speed: {mean: 2, std: .5},
     size: {mean: 9, std: 3},
     gravity: 7,
     duration: 100,
@@ -58,6 +58,9 @@ MyGame.particleSystem = (function(graphics){
       lifetime.std
       size.mean
       size.std
+      speed.mean
+      speed.std
+      gravity
       stroke/fill/imageSrc
       rotationMax (optional)
       duration (optional)
@@ -83,7 +86,7 @@ MyGame.particleSystem = (function(graphics){
             for (time; time > (1000/spec.particlesPerSec); time -= (1000/spec.particlesPerSec) ){
                 let p = {
                     direction: Random.nextCircleVector(),
-                    speed: Random.nextGaussian( 0.05, .025 ),	// pixels per millisecond
+                    speed: Math.abs(Random.nextGaussian(spec.speed.mean/1000, spec.speed.std/1000)),	// pixels per millisecond
                     rotation: 0,
                     lifetime: Math.abs(Random.nextGaussian(spec.lifetime.mean, spec.lifetime.std)),	// milliseconds
                     alive: 0,
@@ -130,14 +133,12 @@ MyGame.particleSystem = (function(graphics){
         //Loop through particles
         for (let particle = (particles.length-1); particle >= 0; --particle) {
             particles[particle].alive += elapsedTime;
-            particles[particle].rotation += elapsedTime * particles[particle].rotationRate;
             particles[particle].x += (elapsedTime * particles[particle].speed * particles[particle].direction.x);
             particles[particle].y += (elapsedTime * particles[particle].speed * particles[particle].direction.y);
-            if (particle.hasOwnProperty('rotationRate')){
-                particles[particle].rotation += particles[particle].rotationRate;
-            }
-            if (particle.hasOwnProperty('gravity')){
-                particles[particle].direction.y += (elapsedTime * particles[particle].gravity);
+            particles[particle].direction.y += (elapsedTime * particles[particle].gravity/1000);
+
+            if (particles[particle].hasOwnProperty('rotationRate')){
+                particles[particle].rotation += (elapsedTime * particles[particle].rotationRate/1000);
             }
             if (particles[particle].alive > particles[particle].lifetime) {
                 particles.splice(particle, 1);
