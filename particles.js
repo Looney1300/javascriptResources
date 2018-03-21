@@ -1,51 +1,105 @@
-MyGame.particleSystem = (function(){
+/*
+EXAMPLE spec object:
+{
+    x: 100,
+    y: 100,
+    xMax: 150, //(for dissolve) 
+    yMax: 150, //(for dissolve) 
+    particlesPerSec: 10, //(for explosion and burning)
+    fill: color.white,
+    stroke: 'rgba(0,0,0,0)',
+    imageSrc: 'fire.png',
+    rotation: {mean: .1, std: .1},
+    lifetime: {mean: 700, std: 100},
+    speed: {mean: .05, std: .01},
+    size: {mean: 9, std: 3},
+    gravity: 7,
+    duration: 100,
+}
+*/
+MyGame.particleSystem = (function(graphics){
+
+    let particles = [];
+    let activeParticleEffects = [];
+    let particleGraphics = [];
+
     /*
-    BurningParticles creates a particle effect based on spec passed to it, which has...
+    Particles makes a list of particle graphics.
+    */
+    function Particle(particle){
+        let particleGraphic;
+        if (particle.hasOwnProperty('imageSrc')){
+            particle.center = particle.position;
+            particle.width = particle.size;
+            particle.height = particle.size;
+            particleGraphic = graphics.Texture(particle);
+        }
+        else if (particle.hasOwnProperty('fill') || particle.hasOwnProperty('stroke')){
+            particle.x = particle.position.x;
+            particle.y = particle.position.y;
+            particle.fillStyle = particle.fill;
+            particle.strokeStyle = particle.stroke;
+            particle.width = particle.size;
+            particle.height = particle.size;
+            particleGraphic = graphics.Rectangle(particle);
+        }
+        //Returns either a rectangle or a texture.
+        return particleGraphic;
+    }
+
+    /*
+    ParticleEffect creates a particle effect based on spec passed to it, which has...
       x
       y
-      particlesPerMS
+      xMax (optional)
+      yMax (optional)
+      particlesPerSec
       lifetime.mean
       lifetime.std
       size.mean
       size.std
       stroke/fill/imageSrc
-      maxRotation
-
+      rotationMax (optional)
+      duration (optional)
+    Returns true if still active, and false if effect duration is finished.
     */
-    function BurningEffect(spec){
+    function ParticleEffect(spec){
+        activeParticleEffects.push(MakeParticleEffect(spec));
+    }
+
+    function MakeParticleEffect(spec){
         let that = {};
-        that.particles = [];
-        
+        let time = 0.0;
+        let effectDuration = 0.0;
+
         that.update = function(elapsedTime){
-            let keepMe = [];
-            for (let particle = 0; particle < that.particles.length; particle++) {
-                that.particles[particle].alive += elapsedTime;
-                that.particles[particle].position.x += (elapsedTime * that.particles[particle].speed * that.particles[particle].direction.x);
-                that.particles[particle].position.y += (elapsedTime * that.particles[particle].speed * that.particles[particle].direction.y);
-                if (spec.hasOwnProperty('maxRotation')){
-                    that.particles[particle].rotation += Random.nextGaussian( 0, spec.maxRotation);
-                }
-            
-                if (that.particles[particle].alive <= that.particles[particle].lifetime) {
-                    keepMe.push(that.particles[particle]);
-                }
+            time += elapsedTime;
+            effectDuration += elapsedTime;
+            //Makes a certain number of particles per second.
+            // make one particle every 1000/spec.particlesPerSec
+            if (spec.hasOwnProperty('duration') && effectDuration > spec.duration){
+                return false;
             }
-            
-            //Makes a certain number of particles per millisecond.
-            //There is a lower limit to particlesPerMS, because if there is any elapsedTime at all, 
-            // it will always make at least one particle per frame, becuase it rounds up.
-            for (let particle = spec.particlesPerMS; particle < (spec.particlesPerMS*elapsedTime); particle++) {
+            for (time; time > (1000/spec.particlesPerSec); time -= (1000/spec.particlesPerSec) ){
                 let p = {
-                    position: { x: spec.x, y: spec.y },
                     direction: Random.nextCircleVector(),
                     speed: Random.nextGaussian( 0.05, .025 ),	// pixels per millisecond
                     rotation: 0,
-                    lifetime: Random.nextGaussian(spec.lifetime.mean, spec.lifetime.std),	// milliseconds
+                    lifetime: Math.abs(Random.nextGaussian(spec.lifetime.mean, spec.lifetime.std)),	// milliseconds
                     alive: 0,
                     size: Random.nextGaussian(spec.size.mean, spec.size.std),
                 };
+                if (spec.hasOwnProperty('rotationMax')){
+                    p.rotationRate = Random.nextGaussian(0, spec.rotationMax);
+                }
+                if (spec.hasOwnProperty('gravity')){
+                    p.gravity = spec.gravity;
+                }
                 if (spec.hasOwnProperty('fill')){
                     p.fill = spec.fill;
+                }
+                if (spec.hasOwnProperty('lineWidth')){
+                    p.lineWidth = spec.lineWidth;
                 }
                 if (spec.hasOwnProperty('stroke')){
                     p.stroke = spec.stroke;
@@ -53,174 +107,61 @@ MyGame.particleSystem = (function(){
                 if (spec.hasOwnProperty('imageSrc')){
                     p.imageSrc = spec.imageSrc;
                 }
-                keepMe.push(p);
+                if (spec.hasOwnProperty('xMax') && spec.hasOwnProperty('yMax')){
+                    p.position = { x: Random.nextRange(spec.x, spec.maxX), y: Random.nextRange(spec.y, spec.maxY)};
+                }else{
+                    p.position = {x: spec.x, y: spec.y};
+                }
+                if (spec.hasOwnProperty('imageSrc')){
+                    p.imageSrc = spec.imageSrc;
+                }
+                particles.push(p);
+                particleGraphics.push(Particle(p));
             }
 
-            that.particles = keepMe;
+            return true;
         }
 
         return that;
     }
 
-    /*
-    ExplosionEffect that expects an obect with...
-      x
-      y
-      particlesPerMS
-      lifetime.mean
-      lifetime.std
-      speed.mean
-      speed.std
-      size.mean
-      size.std
-      stroke/fill/imageSrc
-      maxRotation
-      duration
-      gravity
-    Returns false if particle effect has finished, true otherwise.
-    To make a firework explosion just set speed standard deviation very close to 0.
-    */
-    function ExplosionEffect(spec){
-        let that = {};
-        that.particles = [];
-        let timeUsed = 0;
-        
-        that.update = function(elapsedTime){
-            let keepMe = [];
-            
-            for (let particle = 0; particle < that.particles.length; particle++) {
-                that.particles[particle].alive += elapsedTime;
-                if (spec.hasOwnProperty('gravity')){
-                    that.particles[particle].direction.y += (elapsedTime * spec.gravity/1000);
-                }
-                that.particles[particle].position.x += (elapsedTime * that.particles[particle].speed * that.particles[particle].direction.x);
-                that.particles[particle].position.y += (elapsedTime * that.particles[particle].speed * that.particles[particle].direction.y);
-                if (spec.hasOwnProperty('maxRotation')){
-                    that.particles[particle].rotation += Random.nextGaussian( 0, spec.maxRotation);
-                }
-                
-                if (that.particles[particle].alive <= that.particles[particle].lifetime) {
-                    keepMe.push(that.particles[particle]);
-                }
+    //UpdateParticles updates the particles and removes them when dead, and their corresponding graphics.
+    function updateParticles(elapsedTime){
+        //Loop through particles
+        for (let particle = (particles.length-1); particle >= 0; --particle) {
+            particles[particle].alive += elapsedTime;
+            particles[particle].rotation += elapsedTime * particles[particle].rotationRate;
+            particles[particle].x += (elapsedTime * particles[particle].speed * particles[particle].direction.x);
+            particles[particle].y += (elapsedTime * particles[particle].speed * particles[particle].direction.y);
+            if (particle.hasOwnProperty('rotationRate')){
+                particles[particle].rotation += particles[particle].rotationRate;
             }
-            
-            timeUsed += elapsedTime;
-            if (timeUsed < spec.duration){
-                //Makes a certain number of particles per millisecond.
-                //There is a lower limit to particlesPerMS, because if there is any elapsedTime at all, 
-                // it will always make at least one particle per frame, becuase it rounds up.
-                for (let particle = spec.particlesPerMS; particle < (spec.particlesPerMS*elapsedTime); particle++) {
-                    let p = {
-                        position: { x: spec.x, y: spec.y },
-                        direction: Random.nextCircleVector(),
-                        speed: Random.nextGaussian(spec.speed.mean, spec.speed.std),	// pixels per millisecond
-                        rotation: 0,
-                        lifetime: Random.nextGaussian(spec.lifetime.mean, spec.lifetime.std),	// milliseconds
-                        alive: 0,
-                        size: Random.nextGaussian(spec.size.mean, spec.size.std),
-                    };
-                    if (spec.hasOwnProperty('fill')){
-                        p.fill = spec.fill;
-                    }
-                    if (spec.hasOwnProperty('stroke')){
-                        p.stroke = spec.stroke;
-                    }
-                    if (spec.hasOwnProperty('imageSrc')){
-                        p.imageSrc = spec.imageSrc;
-                    }
-                    keepMe.push(p);
-                }
+            if (particle.hasOwnProperty('gravity')){
+                particles[particle].direction.y += (elapsedTime * particles[particle].gravity);
             }
-            that.particles = keepMe;
-            if (keepMe.length === 0){
-                return false;
+            if (particles[particle].alive > particles[particle].lifetime) {
+                particles.splice(particle, 1);
+                particleGraphics.splice(particle, 1);
             }
-            return true;
-
         }
-
-        return that;
+        //Add any new particles from ActiveParticleEffects
+        for (let i = (activeParticleEffects.length-1); i >= 0; --i){
+            if (!activeParticleEffects[i].update(elapsedTime)){
+                activeParticleEffects.splice(i, 1);
+            }
+        }
     }
 
-    /*
-    AreaDisolveEffect takes a certain area and makes it dissolve with a certain gravity. Expects object with...
-      gravity
-      x
-      y
-      xMax
-      yMax
-      numOfParticles
-      lifetime.mean
-      lifetime.std
-      speed.mean
-      speed.std
-      stroke/fill/imageSrc
-      maxRotation
-    */
-    function AreaDissolveEffect(spec){
-        let that = {};
-        that.particles = [];
-    
-        //Makes a certain number of particles per millisecond.
-        //There is a lower limit to particlesPerMS, because if there is any elapsedTime at all, 
-        // it will always make at least one particle per frame, becuase it rounds up.
-        for (let particle = 0; particle < spec.numParticles; particle++) {
-            let p = {
-                position: { x: Random.nextRange(spec.x, spec.xMax), y: Random.nextRange(spec.y, spec.yMax) },
-                direction: Random.nextCircleVector(),
-                speed: Random.nextGaussian(spec.speed.mean, spec.speed.std),	// pixels per millisecond
-                rotation: 0,
-                rotationRate: Random.nextGaussian( 0, spec.maxRotation),
-                lifetime: Math.abs(Random.nextGaussian(spec.lifetime.mean, spec.lifetime.std)),	// milliseconds
-                alive: 0,
-                size: Random.nextGaussian(spec.size.mean, spec.size.std),
-            };
-            if (spec.hasOwnProperty('fill')){
-                p.fill = spec.fill;
-            }
-            if (spec.hasOwnProperty('stroke')){
-                p.stroke = spec.stroke;
-            }
-            if (spec.hasOwnProperty('imageSrc')){
-                p.imageSrc = spec.imageSrc;
-            }
-            that.particles.push(p);
+    function renderParticleSystem(){
+        for (let i=0; i<particleGraphics.length; ++i){
+            particleGraphics[i].draw(particles[i].particles);
         }
-        
-        that.update = function(elapsedTime){
-            let keepMe = [];
-            
-            for (let particle = 0; particle < that.particles.length; particle++) {
-                that.particles[particle].alive += elapsedTime;
-                if (spec.hasOwnProperty('gravity')){
-                    that.particles[particle].direction.y += (elapsedTime * spec.gravity/1000);
-                }
-                that.particles[particle].position.x += (elapsedTime * that.particles[particle].speed * that.particles[particle].direction.x);
-                that.particles[particle].position.y += (elapsedTime * that.particles[particle].speed * that.particles[particle].direction.y);
-                if (spec.hasOwnProperty('maxRotation')){
-                    that.particles[particle].rotation += that.particles[particle].rotationRate;
-                }
-                //If still alive, add to keepMe list.
-                if (that.particles[particle].alive <= that.particles[particle].lifetime) {
-                    keepMe.push(that.particles[particle]);
-                }
-            }
-
-            that.particles = keepMe;
-            if (keepMe.length === 0){
-                return false;
-            }
-            return true;
-
-        }
-
-        return that;
     }
 
     return {
-        BurningEffect: BurningEffect,
-        ExplosionEffect: ExplosionEffect,
-        AreaDissolveEffect: AreaDissolveEffect
+        ParticleEffect: ParticleEffect,
+        update: updateParticles,
+        draw: renderParticleSystem
     };
 
-}());
+}(MyGame.graphics));
