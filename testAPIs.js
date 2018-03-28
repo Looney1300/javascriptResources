@@ -1,7 +1,5 @@
-MyGame.main = (function (graphics, input, particleSystem, persistence) {
+MyGame.main = (function (graphics, particleSystem) {
     let previousTime = performance.now();
-
-    let keyboard = input.Keyboard();
 
     let menuSpec = {
         background: '',
@@ -40,24 +38,69 @@ MyGame.main = (function (graphics, input, particleSystem, persistence) {
     let letters = graphics.Letters(text);
 
     let particleSpec = {
-        x: 800,
-        y: 500,
-        // xMax: 850,
-        // yMax: 550,
-        particlesPerSec: 100,
-        fill: color.white,
-        lineWidth: 1,
-        stroke: color.black,
-        // imageSrc: 'bubble1b.png',
+        x: 0,
+        y: 0,
+        xMax: 1600,
+        yMax: 0,
+        particlesPerSec: 10,
+        // fill: color.red,
+        // lineWidth: 1,
+        // stroke: color.black,
+        imageSrc: 'snow.png',
         rotationMax: 1,
-        lifetime: {mean: 2000, std: 100},
-        speed: {mean: 50, std: 10},
-        size: {mean: 5, std: 1},
-        gravity: 9.8,
-        duration: 10000,
+        lifetime: {mean: 10000, std: 100},
+        speed: {mean: 100, std: 0},
+        size: {mean: 20, std: 5},
+        gravity: 0,
+        limitY: 1,
+        limitX: 0,
+        // duration: 200,
     }
 
     particleSystem.ParticleEffect(particleSpec);
+
+    let particleSpec2 = {
+        x: 600,
+        y: 100,
+        // xMax: 850,
+        // yMax: 550,
+        particlesPerSec: 50,
+        fill: color.white,
+        lineWidth: 1,
+        stroke: color.green,
+        // imageSrc: 'flame.png',
+        rotationMax: 2,
+        lifetime: {mean: 1000, std: 100},
+        speed: {mean: 100, std: 50},
+        size: {mean: 50, std: 1},
+        gravity: 1,
+        // duration: 100,
+        disappear: true
+    }
+
+    particleSystem.ParticleEffect(particleSpec2);
+ 
+    let particleSpec3 = {
+        x: 625,
+        y: 100,
+        // xMax: 850,
+        // yMax: 550,
+        particlesPerSec: 20,
+        fill: color.green,
+        lineWidth: 1,
+        // stroke: color.green,
+        // imageSrc: 'bubble1b.png',
+        rotationMax: 1,
+        lifetime: {mean: 500, std: 100},
+        speed: {mean: 200, std: 10},
+        size: {mean: 50, std: 1},
+        gravity: 1,
+        // onTop: true,
+        disappear: true,
+        // duration: 10000,
+    }
+
+    particleSystem.ParticleEffect(particleSpec3);
 
     //-----------------------------------------------------
     //
@@ -70,7 +113,6 @@ MyGame.main = (function (graphics, input, particleSystem, persistence) {
     }
 
     function processInput(elapsedTime) {
-        keyboard.processInput(elapsedTime);
     }
 
     function render() {
@@ -91,4 +133,4 @@ MyGame.main = (function (graphics, input, particleSystem, persistence) {
     console.log('game initializing...');
     requestAnimationFrame(gameLoop);
 
-})(MyGame.graphics, MyGame.input, MyGame.particleSystem, MyGame.persistence);
+})(MyGame.graphics, MyGame.particleSystem);

@@ -20,14 +20,18 @@ MyGame.graphics = (function(){
     /*Rectangle expects a spec with
         rotation
         x
-        width
         y
+        width
         height
         fillStyle
         strokeStyle
+        lineWidth (optional)
     */
     function Rectangle(spec){
         let that = {};
+        let hasFillStyle = spec.hasOwnProperty('fillStyle');
+        let hasLineWidth = spec.hasOwnProperty('lineWidth');
+        let hasStrokeStyle = spec.hasOwnProperty('strokeStyle');
 
         that.updateRotation = function(angle){
             spec.rotation += angle;
@@ -42,11 +46,17 @@ MyGame.graphics = (function(){
             context.rotate(spec.rotation);
             context.translate(-(spec.x + spec.width/2), -(spec.y + spec.height/2));
             //3. Draw shape at original coordinates
-            context.fillStyle = spec.fillStyle;
-            context.fillRect(spec.x, spec.y, spec.width, spec.height);
-            context.strokeStyle = spec.strokeStyle;
-            context.lineWidth = 5;
-            context.strokeRect(spec.x, spec.y, spec.width, spec.height);
+            if (hasFillStyle){
+                context.fillStyle = spec.fillStyle;
+                context.fillRect(spec.x, spec.y, spec.width, spec.height);
+            }
+            if (hasLineWidth){
+                context.lineWidth = spec.lineWidth;
+            }
+            if (hasStrokeStyle){
+                context.strokeStyle = spec.strokeStyle;
+                context.strokeRect(spec.x, spec.y, spec.width, spec.height);
+            }
             //4. Undo translations and rotations of canvas.
             context.restore();
         };
@@ -78,18 +88,18 @@ MyGame.graphics = (function(){
         that.updateRotation = function(angle){
             spec.rotation += angle;
         };
-
+        
         that.draw = function(){
-            if (ready){                
+            if (ready){
                 context.save();
-                context.translate(spec.center.x, spec.center.y);
+                context.translate(spec.x, spec.y);
                 context.rotate(spec.rotation);
-                context.translate(-spec.center.x, -spec.center.y);
+                context.translate(-spec.x, -spec.y);
 
                 context.drawImage(
                     image,
-                    spec.center.x - spec.width/2,
-                    spec.center.y -spec.height/2,
+                    spec.x - spec.width/2,
+                    spec.y -spec.height/2,
                     spec.width, spec.height);
 
                 context.restore();   
@@ -218,33 +228,25 @@ MyGame.graphics = (function(){
     /*
     Particles draws a list of particles.
     */
-    function Particles(particles1){
-        let that = {};
-        that.draw = function(particles){
-            for (let i=0; i < particles.length; ++i){
-                if (particles[i].alive > 100){
-                    context.save();
-                    context.translate(particles[i].position.x + particles[i].size / 2, particles[i].position.y + particles[i].size / 2);
-                    context.rotate(particles[i].rotation);
-                    context.translate(-(particles[i].position.x + particles[i].size / 2), -(particles[i].position.y + particles[i].size / 2));
-            
-                    if (particles[i].hasOwnProperty('fill')){
-                        context.fillStyle = particles[i].fill;
-                        context.fillRect(particles[i].position.x, particles[i].position.y, particles[i].size, particles[i].size);
-                    }
-                    if (particles[i].hasOwnProperty('stroke')){
-                        context.strokeStyle = particles[i].stroke;
-                        context.strokeRect(particles[i].position.x, particles[i].position.y, particles[i].size, particles[i].size);
-                    }
-                    if (particles[i].hasOwnProperty('imageSrc')){
-                        particles[i].center = paricles[i].position;
-                        Texture(particles[i]).draw();
-                    }
-                    context.restore();
-                }
-            }
+    function Particle(particle){
+        let particleGraphic;
+        if (particle.hasOwnProperty('imageSrc')){
+            particle.center = particle.position;
+            particle.width = particle.size;
+            particle.height = particle.size;
+            particleGraphic = graphics.Texture(particle);
         }
-        return that;
+        else if (particle.hasOwnProperty('fill') || particle.hasOwnProperty('stroke')){
+            particle.x = particle.position.x;
+            particle.y = particle.position.y;
+            particle.fillStyle = particle.fill;
+            particle.strokeStyle = particle.stroke;
+            particle.width = particle.size;
+            particle.height = particle.size;
+            particleGraphic = graphics.Rectangle(particle);
+        }
+        //Returns either a rectangle or a texture.
+        return particleGraphic;
     }
 
     /*
@@ -308,7 +310,6 @@ MyGame.graphics = (function(){
                 baseline: 'middle'
             }
 
-            console.log(newSpec);
             textgList.push(Letters(newSpec));
             menu.button.y += menu.gap + menu.button.height;
         }
@@ -348,7 +349,7 @@ MyGame.graphics = (function(){
         Lines: Lines,
         Circle: Circle,
         Letters: Letters,
-        Particles: Particles,
+        Particle: Particle,
         Menu: Menu,
         Background: Background,
     };
