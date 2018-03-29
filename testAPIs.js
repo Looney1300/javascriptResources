@@ -46,7 +46,7 @@ MyGame.main = (function (graphics, particleSystem) {
         // fill: color.red,
         // lineWidth: 1,
         // stroke: color.black,
-        imageSrc: 'snow.png',
+        imageSrc: 'assets/snow.png',
         rotationMax: 1,
         lifetime: {mean: 10000, std: 100},
         speed: {mean: 100, std: 0},
