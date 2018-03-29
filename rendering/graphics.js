@@ -168,6 +168,8 @@ MyGame.graphics = (function(){
      centerX
      centerY
      radius
+     strokeStyle
+     fillStyle
     */
     function Circle(spec){
         let that = {};
@@ -223,30 +225,6 @@ MyGame.graphics = (function(){
         }
 
         return that;
-    }
-
-    /*
-    Particles draws a list of particles.
-    */
-    function Particle(particle){
-        let particleGraphic;
-        if (particle.hasOwnProperty('imageSrc')){
-            particle.center = particle.position;
-            particle.width = particle.size;
-            particle.height = particle.size;
-            particleGraphic = graphics.Texture(particle);
-        }
-        else if (particle.hasOwnProperty('fill') || particle.hasOwnProperty('stroke')){
-            particle.x = particle.position.x;
-            particle.y = particle.position.y;
-            particle.fillStyle = particle.fill;
-            particle.strokeStyle = particle.stroke;
-            particle.width = particle.size;
-            particle.height = particle.size;
-            particleGraphic = graphics.Rectangle(particle);
-        }
-        //Returns either a rectangle or a texture.
-        return particleGraphic;
     }
 
     /*
@@ -349,7 +327,6 @@ MyGame.graphics = (function(){
         Lines: Lines,
         Circle: Circle,
         Letters: Letters,
-        Particle: Particle,
         Menu: Menu,
         Background: Background,
     };

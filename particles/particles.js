@@ -1,6 +1,7 @@
 /*
 EXAMPLE spec object:
     let particleSpec3 = {
+        drawUsing: MyGame.graphics.Rectangle,
         x: 625,
         y: 100,
         // xMax: 850,
@@ -30,33 +31,22 @@ MyGame.particleSystem = (function(graphics){
     Particles makes a list of particle graphics.
     */
     function Particle(particle){
-        let particleGraphic;
-        if (particle.hasOwnProperty('imageSrc')){
-            particle.x = particle.position.x;
-            particle.y = particle.position.y;
-            particle.width = particle.size;
-            particle.height = particle.size;
-            particleGraphic = graphics.Texture(particle);
+        if (particle.hasOwnProperty('fill')){
+            particle.fillStyle = particle.fill;
         }
-        else if (particle.hasOwnProperty('fill') || particle.hasOwnProperty('stroke')){
-            particle.x = particle.position.x;
-            particle.y = particle.position.y;
-            particle.width = particle.size;
-            particle.height = particle.size;
-            if (particle.hasOwnProperty('fill')){
-                particle.fillStyle = particle.fill;
-            }
-            if (particle.hasOwnProperty('stroke')){
-                particle.strokeStyle = particle.stroke;
-            }
-            particleGraphic = graphics.Rectangle(particle);
+        if (particle.hasOwnProperty('stroke')){
+            particle.strokeStyle = particle.stroke;
         }
-        //Returns either a rectangle or a texture.
-        return particleGraphic;
+        particle.x = particle.position.x;
+        particle.y = particle.position.y;
+        particle.width = particle.size;
+        particle.height = particle.size;
+        return particle.graphicsFunction(particle);
     }
 
     /*
     ParticleEffect creates a particle effect based on spec passed to it, which has...
+      drawUsing - a reference to the graphics function to use when drawing this particle effect.
       x - position of particle
       y
       xMax (optional) - for effect over a range.
@@ -109,6 +99,7 @@ MyGame.particleSystem = (function(graphics){
             }
             for (time; time > (1000/spec.particlesPerSec); time -= (1000/spec.particlesPerSec) ){
                 let p = {
+                    graphicsFunction: spec.drawUsing,
                     direction: Random.nextCircleVector(),
                     speed: Math.abs(Random.nextGaussian(spec.speed.mean/1000, spec.speed.std/1000)),	// pixels per millisecond
                     rotation: 0,

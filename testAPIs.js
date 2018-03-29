@@ -38,6 +38,7 @@ MyGame.main = (function (graphics, particleSystem) {
     let letters = graphics.Letters(text);
 
     let particleSpec = {
+        drawUsing: graphics.Texture,
         x: 0,
         y: 0,
         xMax: 1600,
@@ -60,6 +61,7 @@ MyGame.main = (function (graphics, particleSystem) {
     particleSystem.ParticleEffect(particleSpec);
 
     let particleSpec2 = {
+        drawUsing: graphics.Rectangle,
         x: 600,
         y: 100,
         // xMax: 850,
@@ -81,6 +83,7 @@ MyGame.main = (function (graphics, particleSystem) {
     particleSystem.ParticleEffect(particleSpec2);
  
     let particleSpec3 = {
+        drawUsing: graphics.Rectangle,
         x: 625,
         y: 100,
         // xMax: 850,
