@@ -1,5 +1,8 @@
-MyGame.main = (function (graphics, particleSystem) {
+MyGame.main = (function (input, graphics, particleSystem) {
     let previousTime = performance.now();
+
+    let mouse = input.Mouse();
+    let keyboard = input.Keyboard();
 
     let menuSpec = {
         background: '',
@@ -17,25 +20,21 @@ MyGame.main = (function (graphics, particleSystem) {
             lineWidth: 3
         },
         buttons: ['New Game', 'Key Bindings', 'High Scores', 'Join Game', 'h', 'a', ''],
+        functionList: [
+            function(){console.log('Clicked New Game')}, 
+            function(){console.log('Clicked Key Bindings')}, 
+            function(){console.log('Clicked High Scores')}, 
+            function(){console.log('Clicked Join Game')}, 
+            function(){console.log('Clicked h')},
+            function(){console.log('Clicked a')},
+            function(){console.log('Clicked \'\'')}
+        ],
         //gap: 100
     }
 
-    let menuGraphic = graphics.Menu(menuSpec);
+    let menu = MyGame.menu(menuSpec);
 
-    let text = {
-        text: 'hello',
-        size: '2em',
-        font: 'Courier',
-        fillStyle: 'rgba(0, 100, 0, 1)',
-        strokeStyle: 'rgba(0, 100, 0, 1)',
-        align: 'center',
-        baseline: 'bottom',
-        lineWidth: 3,
-        x: 100,
-        y: 100
-    }
-
-    let letters = graphics.Letters(text);
+    mouse.registerMouseReleasedHandler(menu.menuSelection);
 
     let particleSpec = {
         drawUsing: graphics.Texture,
@@ -113,6 +112,7 @@ MyGame.main = (function (graphics, particleSystem) {
 
     function update(elapsedTime) {
         particleSystem.update(elapsedTime);
+
     }
 
     function processInput(elapsedTime) {
@@ -120,7 +120,8 @@ MyGame.main = (function (graphics, particleSystem) {
 
     function render() {
         graphics.clear();
-        particleSystem.draw();
+        // particleSystem.draw();
+        menu.draw();
     }
 
     function gameLoop(time) {
@@ -136,4 +137,4 @@ MyGame.main = (function (graphics, particleSystem) {
     console.log('game initializing...');
     requestAnimationFrame(gameLoop);
 
-})(MyGame.graphics, MyGame.particleSystem);
+})(MyGame.input, MyGame.graphics, MyGame.particleSystem);

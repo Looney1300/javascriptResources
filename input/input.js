@@ -1,6 +1,5 @@
 MyGame.input = (function() {
 
-	//TODO: make a mouse input handling api.
 	function Mouse() {
 		let that = {
 			pressed: function(){},
